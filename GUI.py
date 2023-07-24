@@ -1,3 +1,6 @@
+#          ┓┏ ┓    ┳┓ ┳ ┏┓
+#          ┃┃ ┃ ┏┓ ┃┃ ┃ ┣
+#   by     ┗┛ ┗ ┗┛ ┻┛ ┻ ┗┛
 import flet as ft
 from flet import *
 from ahk import AHK
@@ -7,13 +10,7 @@ import threading
 
 ahk = AHK()
 ahk.set_capslock_state(0)
-
-
-def clicker():
-    while True:
-        if ahk.key_state('CapsLock', mode='T') and ahk.key_state('alt', mode='P'):
-            ahk.click()
-            time.sleep(0.625)
+selected_button = "XButton1"
 
 
 def app(page: ft.page):
@@ -33,10 +30,10 @@ def app(page: ft.page):
 
     def play_sounds():
         if ahk.key_state('CapsLock', mode='T'):
-            winsound.PlaySound('assets/sounds/on.wav', winsound.SND_FILENAME)
+            threading.Thread(target=lambda: winsound.PlaySound('assets/sounds/on.wav', winsound.SND_FILENAME)).start()
             activate_btn.text = "OFF"
         else:
-            winsound.PlaySound('assets/sounds/off.wav', winsound.SND_FILENAME)
+            threading.Thread(target=lambda: winsound.PlaySound('assets/sounds/off.wav', winsound.SND_FILENAME)).start()
             activate_btn.text = "ON"
         page.update()
 
@@ -51,8 +48,15 @@ def app(page: ft.page):
             main_cont.gradient.colors = ['#7038aa', '#160033']
             logo.image_src = 'assets/images/dark_theme/logo.png'
             change_theme_btn.icon = ft.icons.WB_SUNNY_ROUNDED
-        time.sleep(0.2)  # задержка чисто для красоты
         page.update()
+
+    def clicker():
+        while True:
+            start = time.time()
+            if ahk.key_state('CapsLock', mode='T') and ahk.key_state(selected_button, mode='P'):
+                ahk.click()
+                time.sleep(0.625)
+                print(start - time.time())
 
     change_theme_btn = ft.IconButton(icon=ft.icons.BEDTIME,
                                      tooltip="Change appearance mode", on_click=change_theme,
@@ -69,11 +73,15 @@ def app(page: ft.page):
         style=ft.ButtonStyle(shape=ft.CircleBorder(),
                              side=BorderSide(3, color=ft.colors.PURPLE)))
 
-    # x тут что-бы ошибки не-было
     support_btn = ft.TextButton(text="Поддержать",
-                                on_click=lambda x: page.launch_url("https://www.donationalerts.com/r/vlodie"),
-                                width=120, height=100, style=ft.ButtonStyle(color=ft.colors.WHITE,
-                                                                            overlay_color=ft.colors.TRANSPARENT))
+                                url="https://www.donationalerts.com/r/vlodie",
+                                width=110, height=50, style=ft.ButtonStyle(color=ft.colors.WHITE,
+                                                                           overlay_color=ft.colors.TRANSPARENT))
+
+    selected_key = ft.RadioGroup(content=ft.Row([
+        ft.Radio(value="XButton1", label="Side mouse button", fill_color=ft.colors.WHITE70),
+        ft.Radio(value="b", label="B key", fill_color=ft.colors.WHITE70)]),
+        value="XButton1")
 
     # ft.colors.INDIGO
     main_cont = (ft.Container(
@@ -98,9 +106,13 @@ def app(page: ft.page):
                 content=activate_btn),
 
             ft.Container(
-                alignment=ft.alignment.bottom_left, left=3, bottom=10,
+                alignment=ft.alignment.bottom_left, left=1, bottom=30,
                 width=120, height=100,
-                content=support_btn
+                content=support_btn),
+
+            ft.Container(
+                width=200, height=20, top=510, left=105,
+                content=selected_key
             )
 
         ]),
@@ -115,8 +127,7 @@ def app(page: ft.page):
     ahk.add_hotkey("CapsLock", callback=for_hotkey)
     ahk.start_hotkeys()
 
-    clicker_thread = threading.Thread(target=clicker())
-    clicker_thread.start()
+    threading.Thread(target=clicker()).start()
 
 
 if __name__ == "__main__":
