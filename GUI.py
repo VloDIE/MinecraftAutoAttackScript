@@ -8,7 +8,7 @@ import time
 import winsound
 import threading
 
-ahk = AHK()
+ahk = AHK(executable_path="assets/executable ahk file/AutoHotkey.exe")
 ahk.set_capslock_state(0)
 selected_button = "XButton1"
 
